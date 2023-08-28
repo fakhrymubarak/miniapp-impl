@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.application")
+//    id("com.android.application")
     id("org.jetbrains.kotlin.android")
-
+    id("com.android.library")
 }
 
 android {
@@ -9,11 +9,11 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "com.research.apps.appstwominiapp"
+//        applicationId = "com.research.apps.appstwominiapp"
         minSdk = 24
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+//        versionCode = 1
+//        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -28,11 +28,15 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
+    }
+
+    buildFeatures {
+        viewBinding = true
     }
 }
 
