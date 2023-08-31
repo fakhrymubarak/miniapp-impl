@@ -12,9 +12,12 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.app
 import com.google.firebase.ktx.initialize
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.research.apps.appstwominiapp.databinding.ActivityMiniappBinding
 import timber.log.Timber
 
@@ -43,6 +46,8 @@ class MiniappActivity : AppCompatActivity() {
         initFirebaseMiniapp()
         askNotificationPermission()
         getCurrentFcmToken()
+        initFirebaseDatabase()
+        initFirebaseRemoteConfig()
 
         initView()
         initEvent()
@@ -91,6 +96,7 @@ class MiniappActivity : AppCompatActivity() {
             .setStorageBucket("apps-two-miniapp.appspot.com")
             .setApplicationId("1:163783144337:android:bbbe5465977e60e1832030")
             .setApiKey("AIzaSyA9bEDp-SGTqC7EYy0ZKlnKnorlypR35H0")
+            .setDatabaseUrl("https://apps-two-miniapp-default-rtdb.asia-southeast1.firebasedatabase.app")
             .build()
 
 
@@ -131,4 +137,37 @@ class MiniappActivity : AppCompatActivity() {
         })
     }
 
+    private fun initFirebaseDatabase() {
+        val app = Firebase.app(FB_PROJECT_ID)
+        val database = Firebase.database(app)
+        val mRootRef = database.getReference("miniapp_db")
+        val admin = mRootRef.child("admin")
+
+        admin.get()
+            .addOnSuccessListener {
+                val appData = it.child("app")
+                val name = it.child("name")
+                Timber.w("success miniapp data -> ${it.value}")
+                Timber.w("success miniapp data -> ${appData.value}")
+                Timber.w("success miniapp data -> ${name.value}")
+            }.addOnCanceledListener {
+                Timber.w("data cancelled miniapp")
+
+            }.addOnFailureListener {
+                Timber.w("failure miniapp-> ${it.message}")
+            }
+    }
+
+    private fun initFirebaseRemoteConfig() {
+        val app = Firebase.app(FB_PROJECT_ID)
+        val remoteConfig = Firebase.remoteConfig(app)
+
+        remoteConfig.fetchAndActivate()
+
+        val remoteString = remoteConfig.getString("miniapp_param_string")
+        Timber.w("remote string miniapp => $remoteString")
+
+        val remoteBool = remoteConfig.getBoolean("miniapp_param_bool")
+        Timber.w("remote bool miniapp => $remoteBool")
+    }
 }
