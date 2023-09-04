@@ -10,7 +10,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
-import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
@@ -67,11 +67,23 @@ class MiniappActivity : AppCompatActivity() {
     }
 
     private fun initEvent() {
-        val analytics = FirebaseAnalytics.getInstance(this@MiniappActivity)
+        val app = Firebase.app(FB_PROJECT_ID)
+        val analytics = Firebase.analytics
+        val crashlytics = app.get(FirebaseCrashlytics::class.java)
 
         binding.apply {
+
             btnCrash.setOnClickListener {
                 throw RuntimeException("Test Crash Miniapp")
+            }
+
+            btnNonFatal.setOnClickListener {
+                try {
+                    throw RuntimeException("Test Non-Fatal Miniapp")
+                } catch (e: Exception) {
+                    crashlytics.recordException(e)
+                    crashlytics.sendUnsentReports()
+                }
             }
 
             btnAnalytics.setOnClickListener {
@@ -80,16 +92,13 @@ class MiniappActivity : AppCompatActivity() {
                 bundle.putString("button_miniapp", "testing button analytics miniapp")
                 analytics.logEvent("button_analytics_miniapp", bundle)
             }
-
-            btnSendReport.setOnClickListener {
-                FirebaseCrashlytics.getInstance().checkForUnsentReports()
-            }
         }
     }
 
     private fun initTimber() {
         Timber.plant(Timber.DebugTree())
     }
+
     private fun initFirebaseMiniapp() {
         val options = FirebaseOptions.Builder()
             .setProjectId(FB_PROJECT_ID)
@@ -102,6 +111,11 @@ class MiniappActivity : AppCompatActivity() {
 
         // Firebase Kotlin Docs Ways
         Firebase.initialize(this@MiniappActivity, options, FB_PROJECT_ID)
+
+        val app = Firebase.app(FB_PROJECT_ID)
+        val crashlytics = app.get(FirebaseCrashlytics::class.java)
+        crashlytics.sendUnsentReports()
+
     }
 
     private fun askNotificationPermission() {
@@ -124,17 +138,20 @@ class MiniappActivity : AppCompatActivity() {
     }
 
     private fun getCurrentFcmToken() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Timber.w("Fetching FCM registration token failed", task.exception)
-                return@OnCompleteListener
-            }
+val app = Firebase.app(FB_PROJECT_ID)
+val firebaseMessaging = app.get(FirebaseMessaging::class.java)
 
-            // Get new FCM registration token
-            val token = task.result
-            val msg = "Current device token (miniapp) => $token"
-            Timber.d(msg)
-        })
+firebaseMessaging.token.addOnCompleteListener(OnCompleteListener { task ->
+    if (!task.isSuccessful) {
+        Timber.w("Fetching FCM registration token failed miniapp", task.exception)
+        return@OnCompleteListener
+    }
+
+    // Get new FCM registration token
+    val token = task.result
+    val msg = "Current device token (miniapp) => $token"
+    Timber.d(msg)
+})
     }
 
     private fun initFirebaseDatabase() {
